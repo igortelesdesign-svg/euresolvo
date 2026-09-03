@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 /**
  * Supabase Integration Architecture for EURESOLVO
  * Domain: euresolvoagora.com.br
@@ -35,6 +37,12 @@ export function getSupabaseConfig(): SupabaseConfig {
     isConfigured: Boolean(url && anonKey),
   };
 }
+
+const supabaseConfig = getSupabaseConfig();
+
+export const supabase = supabaseConfig.isConfigured
+  ? createClient(supabaseConfig.url, supabaseConfig.anonKey)
+  : null;
 
 /**
  * SQL Schema definition ready for execution in Supabase SQL Editor
