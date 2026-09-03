@@ -1,0 +1,6 @@
+{
+  "name": "EURESOLVO",
+  "description": "Plataforma e marketplace profissional que conecta quem precisa resolver serviços e manutenções a profissionais disponíveis no Rio Grande do Norte e em todo o Brasil.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
