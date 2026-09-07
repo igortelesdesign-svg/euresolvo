@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { X, Upload, Plus, Calendar, Clock, MapPin, Zap, AlertCircle } from 'lucide-react';
 import { SERVICE_CATEGORIES } from '../data/categories';
 import { POPULAR_LOCATIONS } from '../data/locations';
@@ -43,24 +43,48 @@ export const PublishServiceModal: React.FC<PublishServiceModalProps> = ({
   const [timeSlot, setTimeSlot] = useState<'agora' | 'manha' | 'tarde' | 'noite' | 'personalizado'>('tarde');
   const [urgency, setUrgency] = useState<'low' | 'normal' | 'urgent' | 'emergency'>('normal');
   const [images, setImages] = useState<string[]>([]);
-  const [imageInput, setImageInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []) as File[];
+    const remainingSlots = 3 - images.length;
+
+    if (remainingSlots <= 0) {
+      alert("Você pode adicionar no máximo 3 fotos.");
+      e.target.value = "";
+      return;
+    }
+
+    files.slice(0, remainingSlots).forEach((file) => {
+      if (!file.type.startsWith("image/")) {
+        alert(`O arquivo ${file.name} não é uma imagem válida.`);
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`A imagem ${file.name} ultrapassa o limite de 5 MB.`);
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        if (typeof reader.result === "string") {
+          setImages((prev) => [...prev, reader.result].slice(0, 3));
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    e.target.value = "";
+  };
+
 
   if (!isOpen) return null;
 
   const currentCityData = POPULAR_LOCATIONS.find((l) => l.city === city) || POPULAR_LOCATIONS[0];
 
-  const handleAddSampleImage = () => {
-    if (imageInput.trim()) {
-      setImages([...images, imageInput.trim()]);
-      setImageInput('');
-    } else {
-      // Provide a clean demo maintenance photo
-      setImages([
-        ...images,
-        'https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&q=80&w=600',
-      ]);
-    }
-  };
 
   const handleRemoveImage = (index: number) => {
     setImages(images.filter((_, i) => i !== index));
@@ -292,21 +316,23 @@ export const PublishServiceModal: React.FC<PublishServiceModalProps> = ({
             <label className="block text-xs font-bold text-slate-800 mb-1">
               Fotos do Problema / Equipamento (ajuda muito o profissional)
             </label>
-            <div className="flex gap-2">
+            <div>
               <input
-                type="text"
-                value={imageInput}
-                onChange={(e) => setImageInput(e.target.value)}
-                placeholder="Insira a URL de uma foto ou clique em 'Adicionar Foto Exemplo'"
-                className="flex-1 text-xs rounded-xl border border-slate-200 p-2 text-slate-800 focus:outline-none"
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageFiles}
+                className="hidden"
               />
+
               <button
                 type="button"
-                onClick={handleAddSampleImage}
-                className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-800 flex items-center gap-1 shrink-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={images.length >= 3}
+                className="w-full px-4 py-3 rounded-xl border border-dashed border-slate-300 hover:border-[#45C900] text-xs font-bold text-slate-700 disabled:opacity-50"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Adicionar Foto</span>
+                Selecionar foto do dispositivo
               </button>
             </div>
 
