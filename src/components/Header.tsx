@@ -27,6 +27,8 @@ interface HeaderProps {
   onOpenPublish: () => void;
   onOpenAuth: () => void;
   onSwitchUser: (userId: string) => void;
+  isAuthenticated: boolean;
+  onLogout: () => Promise<boolean>;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,6 +40,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenPublish,
   onOpenAuth,
   onSwitchUser,
+  isAuthenticated,
+  onLogout,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -94,95 +98,77 @@ export const Header: React.FC<HeaderProps> = ({
               <PWAInstallPrompt compact />
             </div>
 
-            {/* Role Demo Switcher Dropdown */}
+            {/* Auth / User Menu */}
             <div className="relative">
-              <button
-                id="btn-role-switcher"
-                onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F5F7F9] hover:bg-[#DDE3E8]/50 text-[#071B2F] border border-[#DDE3E8] transition"
-                title="Alternar usuário demo"
-              >
-                <span className="w-2 h-2 rounded-full bg-[#45C900]" />
-                <span className="max-w-[110px] sm:max-w-[140px] truncate text-xs font-semibold text-[#071B2F]">
-                  {currentUser.name.split(' ')[0]} ({currentUser.role === 'professional' ? 'Pro' : currentUser.role === 'admin' ? 'Admin' : 'Contratante'})
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#66727D]" />
-              </button>
+              {isAuthenticated ? (
+                <>
+                  <button
+                    onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[#F5F7F9] hover:bg-[#DDE3E8]/50 text-[#071B2F] border border-[#DDE3E8] transition"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-[#45C900]" />
+                    <span className="max-w-[110px] sm:max-w-[140px] truncate text-xs font-semibold text-[#071B2F]">
+                      {currentUser.name.split(' ')[0]} (
+                      {currentUser.role === 'professional'
+                        ? 'Pro'
+                        : currentUser.role === 'admin'
+                        ? 'Admin'
+                        : 'Contratante'}
+                      )
+                    </span>
+                    <ChevronDown className="w-3.5 h-3.5 text-[#66727D]" />
+                  </button>
 
-              {userDropdownOpen && (
-                <div
-                  className="absolute right-0 mt-2 w-72 rounded-xl bg-white p-2 shadow-xl border border-[#DDE3E8] z-50 animate-fade-in"
-                  onClick={() => setUserDropdownOpen(false)}
-                >
-                  <div className="px-3 py-2 border-b border-[#DDE3E8]">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-[#45C900]">
-                      Simular Perfis (Teste Rápido)
-                    </p>
-                    <p className="text-xs text-[#66727D] mt-0.5 font-normal">
-                      Alterne entre os públicos do marketplace:
-                    </p>
-                  </div>
-
-                  <div className="space-y-1 py-1">
-                    {users.map((u) => {
-                      const isCurrent = u.id === currentUser.id;
-                      return (
-                        <button
-                          key={u.id}
-                          onClick={() => onSwitchUser(u.id)}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-xs flex items-center justify-between transition ${
-                            isCurrent
-                              ? 'bg-[#F5F7F9] font-bold text-[#071B2F] border border-[#DDE3E8]'
-                              : 'text-[#071B2F] hover:bg-[#F5F7F9]'
-                          }`}
-                        >
-                          <div>
-                            <div className="flex items-center gap-1.5">
-                              <span className="font-semibold text-[#071B2F]">{u.name}</span>
-                              {u.role === 'admin' && (
-                                <Shield className="w-3 h-3 text-[#071B2F]" />
-                              )}
-                            </div>
-                            <span className="text-[10px] text-[#66727D] font-normal">
-                              {u.organizationName ||
-                                (u.role === 'professional'
-                                   ? 'Prestador de Serviço'
-                                  : 'Contratante')}
-                            </span>
-                          </div>
-                          <span
-                            className={`text-[10px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded ${
-                              u.role === 'professional'
-                                ? 'bg-[#45C900]/15 text-[#003A67] border border-[#45C900]/30'
-                                : u.role === 'admin'
-                                ? 'bg-[#071B2F] text-white border border-[#071B2F]'
-                                : 'bg-[#F5F7F9] text-[#071B2F] border border-[#DDE3E8]'
-                            }`}
-                          >
-                            {u.role}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <div className="border-t border-[#DDE3E8] pt-1.5 mt-1">
-                    <button
-                      onClick={() => {
-                        if (currentUser.role === 'professional') {
-                          onNavigate('professional_dashboard');
-                        } else if (currentUser.role === 'admin') {
-                          onNavigate('admin');
-                        } else {
-                          onNavigate('contractor_dashboard');
-                        }
-                      }}
-                      className="w-full text-center py-1.5 text-xs font-bold text-[#071B2F] hover:bg-[#F5F7F9] rounded-lg transition"
+                  {userDropdownOpen && (
+                    <div
+                      className="absolute right-0 mt-2 w-56 rounded-xl bg-white p-2 shadow-xl border border-[#DDE3E8] z-50 animate-fade-in"
+                      onClick={() => setUserDropdownOpen(false)}
                     >
-                      Acessar Meu Painel Completo →
-                    </button>
-                  </div>
-                </div>
+                      <div className="px-3 py-2 border-b border-[#DDE3E8]">
+                        <p className="text-xs font-bold text-[#071B2F]">
+                          {currentUser.name}
+                        </p>
+                        <p className="text-[10px] text-[#66727D] mt-0.5">
+                          {currentUser.email}
+                        </p>
+                      </div>
+
+                      <div className="py-1">
+                        <button
+                          onClick={() => {
+                            if (currentUser.role === 'professional') {
+                              onNavigate('professional_dashboard');
+                            } else if (currentUser.role === 'admin') {
+                              onNavigate('admin');
+                            } else {
+                              onNavigate('contractor_dashboard');
+                            }
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-[#071B2F] hover:bg-[#F5F7F9] transition"
+                        >
+                          Meu Painel
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            setUserDropdownOpen(false);
+                            await onLogout();
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-lg text-xs font-semibold text-red-600 hover:bg-red-50 transition"
+                        >
+                          Sair
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <button
+                  onClick={onOpenAuth}
+                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-[#071B2F] text-white hover:bg-[#003A67] transition"
+                >
+                  Entrar
+                </button>
               )}
             </div>
 

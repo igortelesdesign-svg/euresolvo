@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppState, ActiveView } from './hooks/useAppState';
 import { Header } from './components/Header';
 import { BottomNav } from './components/BottomNav';
@@ -39,6 +39,7 @@ export default function App() {
     selectedRequestId,
     filters,
     toast,
+    unreadNotificationsCount,
     currentProProfile,
     setActiveView,
     setSelectedProfessionalId,
@@ -48,6 +49,9 @@ export default function App() {
     hideToast,
     switchUser,
     registerUser,
+    loginUser,
+    logoutUser,
+    isAuthenticated,
     toggleAvailableNow,
     updateWeeklySchedule,
     publishServiceRequest,
@@ -61,8 +65,50 @@ export default function App() {
   // Modals state
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [pendingPostAuthAction, setPendingPostAuthAction] = useState<
+    | { type: 'publish' }
+    | { type: 'apply'; requestId: string; message?: string }
+    | null
+  >(null);
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'role_select'>('role_select');
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+  useEffect(() => {
+    if (!isAuthenticated || !pendingPostAuthAction) return;
+
+    if (pendingPostAuthAction.type === 'publish') {
+      setIsPublishModalOpen(true);
+      setPendingPostAuthAction(null);
+      return;
+    }
+
+    if (pendingPostAuthAction.type === 'apply') {
+      if (currentUser?.role !== 'professional') {
+        showToast(
+          'O EU RESOLVO é exclusivo para contas de profissionais.',
+          'warning'
+        );
+        setPendingPostAuthAction(null);
+        return;
+      }
+
+      if (!currentProProfile) return;
+
+      applyToRequest(
+        pendingPostAuthAction.requestId,
+        pendingPostAuthAction.message
+      );
+
+      setPendingPostAuthAction(null);
+    }
+  }, [
+    isAuthenticated,
+    pendingPostAuthAction,
+    currentUser,
+    currentProProfile,
+    applyToRequest,
+    showToast,
+  ]);
+
   const [reviewModalData, setReviewModalData] = useState<{
     requestId: string;
     proId: string;
@@ -82,6 +128,25 @@ export default function App() {
   };
 
   const handleApplyToRequest = (requestId: string, message?: string) => {
+    if (!isAuthenticated) {
+      setPendingPostAuthAction({
+        type: 'apply',
+        requestId,
+        message,
+      });
+      setAuthMode('login');
+      setIsAuthModalOpen(true);
+      return;
+    }
+
+    if (currentUser?.role !== 'professional') {
+      showToast(
+        'O EU RESOLVO é exclusivo para contas de profissionais.',
+        'warning'
+      );
+      return;
+    }
+
     applyToRequest(requestId, message);
   };
 
@@ -132,14 +197,27 @@ export default function App() {
       {/* Header */}
       <Header
         currentUser={currentUser}
+        users={users}
         activeView={activeView}
-        requestsCount={requests.filter((r) => r.status !== 'resolved').length}
+        unreadCount={unreadNotificationsCount}
         onNavigate={setActiveView}
-        onOpenPublish={() => setIsPublishModalOpen(true)}
-        onOpenAuth={(mode) => {
-          setAuthMode(mode);
+        onOpenPublish={() => {
+          if (isAuthenticated) {
+            setIsPublishModalOpen(true);
+            return;
+          }
+
+          setPendingPostAuthAction({ type: 'publish' });
+          setAuthMode('login');
           setIsAuthModalOpen(true);
         }}
+        onOpenAuth={() => {
+          setAuthMode('login');
+          setIsAuthModalOpen(true);
+        }}
+        onSwitchUser={switchUser}
+        isAuthenticated={isAuthenticated}
+        onLogout={logoutUser}
       />
 
       {/* Main Content Area */}
@@ -212,7 +290,7 @@ export default function App() {
           />
         )}
 
-        {activeView === 'dashboard' && currentUser.role === 'contractor' && (
+        {(activeView === 'dashboard' || activeView === 'contractor_dashboard') && currentUser.role === 'contractor' && (
           <ContractorDashboardView
             currentUser={currentUser}
             requests={requests}
@@ -225,7 +303,7 @@ export default function App() {
           />
         )}
 
-        {activeView === 'schedule' && (
+        {(activeView === 'schedule' || activeView === 'professional_dashboard') && (
           <ProfessionalDashboardView
             currentUser={currentUser}
             profile={currentProProfile}
@@ -314,6 +392,7 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onSelectUser={switchUser}
         onCreateUser={registerUser}
+        onLoginUser={loginUser}
       />
 
       {/* Terms, LGPD & Privacy Modal */}

@@ -175,6 +175,122 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
         </div>
       </div>
 
+      {/* Minhas Candidaturas */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-black text-[#071B2F]">
+              Minhas Candidaturas
+            </h2>
+            <p className="text-xs text-slate-500">
+              Acompanhe as oportunidades em que você clicou em EU RESOLVO
+            </p>
+          </div>
+
+          <span className="text-xs font-bold text-[#003A67] bg-[#003A67]/10 px-3 py-1.5 rounded-full">
+            {myApplications.length} candidatura{myApplications.length === 1 ? '' : 's'}
+          </span>
+        </div>
+
+        {myApplications.length === 0 ? (
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 text-center">
+            <Award className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm font-bold text-[#071B2F]">
+              Você ainda não enviou nenhuma candidatura
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Quando clicar em EU RESOLVO, a oportunidade aparecerá aqui.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {myApplications.map((application) => {
+              const request = requests.find(
+                (r) => r.id === application.requestId
+              );
+
+              if (!request) return null;
+
+              const statusLabel =
+                application.status === 'selected'
+                  ? 'Selecionado'
+                  : application.status === 'rejected'
+                  ? 'Não selecionado'
+                  : application.status === 'cancelled'
+                  ? 'Cancelado'
+                  : 'Aguardando retorno';
+
+              return (
+                <button
+                  key={application.id}
+                  type="button"
+                  onClick={() => onSelectRequest(request.id)}
+                  className="w-full text-left bg-white border border-slate-200 rounded-2xl p-5 hover:border-[#003A67] hover:shadow-sm transition"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-black uppercase tracking-wide text-[#003A67]">
+                        {request.categoryName}
+                      </span>
+
+                      <h3 className="text-sm font-black text-[#071B2F] mt-1">
+                        {request.title}
+                      </h3>
+                    </div>
+
+                    <span
+                      className={`shrink-0 text-[10px] font-black px-2.5 py-1 rounded-full ${
+                        application.status === 'selected'
+                          ? 'bg-[#45C900]/15 text-[#2B8A00]'
+                          : application.status === 'rejected' ||
+                            application.status === 'cancelled'
+                          ? 'bg-slate-100 text-slate-600'
+                          : 'bg-amber-100 text-amber-700'
+                      }`}
+                    >
+                      {statusLabel}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-600">
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#003A67]" />
+                      <span>
+                        {request.neighborhood
+                          ? `${request.neighborhood}, `
+                          : ''}
+                        {request.city}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-[#003A67]" />
+                      <span>
+                        Candidatura enviada em{' '}
+                        {new Date(application.appliedAt).toLocaleDateString(
+                          'pt-BR'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-[#2B8A00]">
+                      EU RESOLVO enviado ✓
+                    </span>
+
+                    <span className="text-[11px] font-bold text-[#003A67] flex items-center gap-1">
+                      Ver oportunidade
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Oportunidades Próximas / Recomendadas */}
       <div>
         <div className="flex items-center justify-between mb-4">

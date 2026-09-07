@@ -490,6 +490,29 @@ export const INITIAL_PROFESSIONALS: ProfessionalProfile[] = [
 ];
 
 export const INITIAL_REQUESTS: ServiceRequest[] = [
+
+  {
+    id: 'req_supabase_test',
+    contractorId: 'contractor_001',
+    contractorName: 'Condomínio Teste',
+    contractorType: 'condominium',
+    categoryId: 'maintenance',
+    categoryName: 'MANUTENÇÃO & OBRAS',
+    title: 'Teste de Persistência Supabase',
+    description: 'Oportunidade temporária criada para validar o envio do EU RESOLVO diretamente para o Supabase.',
+    city: 'Natal',
+    state: 'RN',
+    neighborhood: 'Ponta Negra',
+    serviceDate: new Date().toISOString(),
+    startTime: '14:00',
+    endTime: '17:00',
+    urgency: 'normal',
+    status: 'open',
+    createdAt: new Date().toISOString(),
+    distanceKm: 2.0,
+    images: [],
+  },
+
   {
     id: 'req_1',
     contractorId: 'user_contractor_1',

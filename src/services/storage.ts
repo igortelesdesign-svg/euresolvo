@@ -52,8 +52,17 @@ export const AppStorage = {
   setProfessionals: (pros: ProfessionalProfile[]) =>
     safeSet(STORAGE_KEYS.PROFESSIONALS, pros),
 
-  getRequests: (): ServiceRequest[] =>
-    safeGet(STORAGE_KEYS.REQUESTS, INITIAL_REQUESTS),
+  getRequests: (): ServiceRequest[] => {
+    const saved = safeGet<ServiceRequest[]>(STORAGE_KEYS.REQUESTS, []);
+
+    const savedIds = new Set(saved.map((request) => request.id));
+
+    const missingInitialRequests = INITIAL_REQUESTS.filter(
+      (request) => !savedIds.has(request.id)
+    );
+
+    return [...saved, ...missingInitialRequests];
+  },
   setRequests: (requests: ServiceRequest[]) =>
     safeSet(STORAGE_KEYS.REQUESTS, requests),
 

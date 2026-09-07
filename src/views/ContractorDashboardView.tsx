@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   UserProfile,
   ProfessionalProfile,
@@ -6,6 +6,7 @@ import {
   ServiceApplication,
 } from '../types';
 import { StarRating } from '../components/StarRating';
+import { supabase } from '../services/supabase';
 import {
   Plus,
   Clock,
@@ -41,9 +42,72 @@ export const ContractorDashboardView: React.FC<ContractorDashboardViewProps> = (
   onViewRequestDetails,
 }) => {
   const [activeTab, setActiveTab] = useState<'open' | 'in_progress' | 'resolved'>('open');
+  const [requestContacts, setRequestContacts] = useState<
+    Record<
+      string,
+      {
+        professionalPhone?: string;
+        professionalWhatsapp?: string;
+      }
+    >
+  >({});
 
   // Requests created by this contractor
   const myRequests = requests.filter((r) => r.contractorId === currentUser.id);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const selectedRequests = myRequests.filter(
+      (r) => r.contactUnlocked && r.selectedProfessionalId
+    );
+
+    if (selectedRequests.length === 0) return;
+
+    let cancelled = false;
+
+    const loadContacts = async () => {
+      const entries = await Promise.all(
+        selectedRequests.map(async (req) => {
+          const { data, error } = await supabase.rpc(
+            "get_selected_contact_for_request",
+            { p_request_id: req.id }
+          );
+
+          if (error) {
+            console.error("Erro ao carregar contato liberado:", error);
+            return null;
+          }
+
+          const contact = data?.[0];
+
+          if (!contact) return null;
+
+          return [
+            req.id,
+            {
+              professionalPhone: contact.professional_phone || undefined,
+              professionalWhatsapp: contact.professional_whatsapp || undefined,
+            },
+          ] as const;
+        })
+      );
+
+      if (cancelled) return;
+
+      const validEntries = entries.filter(
+        (entry): entry is NonNullable<typeof entry> => entry !== null
+      );
+
+      setRequestContacts(Object.fromEntries(validEntries));
+    };
+
+    loadContacts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [requests, currentUser.id]);
 
   const filteredRequests = myRequests.filter((r) => {
     if (activeTab === 'resolved') return r.status === 'resolved';
@@ -281,15 +345,25 @@ export const ContractorDashboardView: React.FC<ContractorDashboardViewProps> = (
                             {/* Action per candidate */}
                             <div className="flex items-center gap-2 shrink-0">
                               {isSelected ? (
-                                <a
-                                  href="https://wa.me/5584994223180?text=Olá!%20Te%20selecionei%20no%20EURESOLVO"
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="px-4 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
-                                >
-                                  <MessageCircle className="w-4 h-4" />
-                                  <span>WhatsApp Liberado</span>
-                                </a>
+                                requestContacts[req.id]?.professionalWhatsapp ? (
+                                  <a
+                                    href={`https://wa.me/${requestContacts[
+                                      req.id
+                                    ].professionalWhatsapp!.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                      `Olá, ${app.professionalName}! Te selecionei no EURESOLVO para o serviço "${req.title}".`
+                                    )}`}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="px-4 py-2 rounded-xl bg-[#25D366] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                    <span>Falar no WhatsApp</span>
+                                  </a>
+                                ) : (
+                                  <span className="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 text-xs font-bold">
+                                    Contato não informado
+                                  </span>
+                                )
                               ) : !isResolved ? (
                                 <button
                                   onClick={() => onSelectPro(req.id, app.professionalId)}

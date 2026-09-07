@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X, User, Briefcase, Building2, CheckCircle2, Shield } from 'lucide-react';
 import { UserProfile, UserRole, ContractorType } from '../types';
 import { LogoIcon } from '../components/LogoIcon';
@@ -10,7 +10,8 @@ interface AuthModalProps {
   currentUserId: string;
   onClose: () => void;
   onSelectUser: (userId: string) => void;
-  onCreateUser: (newUser: UserProfile) => void;
+  onCreateUser: (newUser: UserProfile, password: string) => Promise<boolean>;
+  onLoginUser: (email: string, password: string) => Promise<boolean>;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -21,25 +22,76 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   onSelectUser,
   onCreateUser,
+  onLoginUser,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>('professional');
   const [contractorType, setContractorType] = useState<ContractorType>('individual');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('Natal');
   const [orgName, setOrgName] = useState('');
+  const [formError, setFormError] = useState('');
+  const [isCreating, setIsCreating] = useState(false);
+  const [localMode, setLocalMode] = useState<'login' | 'signup'>(
+    mode === 'login' ? 'login' : 'signup'
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      setLocalMode(mode === 'login' ? 'login' : 'signup');
+
+      setName('');
+      setEmail('');
+      setPassword('');
+      setPhone('');
+      setCity('Natal');
+      setOrgName('');
+      setFormError('');
+      setIsCreating(false);
+      setSelectedRole('professional');
+      setContractorType('individual');
+    }
+  }, [isOpen, mode]);
 
   if (!isOpen) return null;
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !email) return;
+
+    if (!email || !password) return;
+
+    const logged = await onLoginUser(email, password);
+
+    if (logged) {
+      onClose();
+    }
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (!name.trim()) {
+      setFormError('Informe seu nome completo.');
+      return;
+    }
+
+    if (!email.trim()) {
+      setFormError('Informe um e-mail válido.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setFormError('A senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
 
     const newUser: UserProfile = {
       id: `user_${Date.now()}`,
-      email,
-      name,
+      email: email.trim(),
+      name: name.trim(),
       role: selectedRole,
       phone: phone || '(84) 99999-8888',
       whatsapp: phone || '(84) 99999-8888',
@@ -51,8 +103,25 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       createdAt: new Date().toISOString(),
     };
 
-    onCreateUser(newUser);
-    onClose();
+    try {
+      setIsCreating(true);
+
+      const created = await onCreateUser(newUser, password);
+
+      if (created) {
+        onClose();
+        return;
+      }
+
+      setFormError(
+        'Não foi possível criar a conta. Verifique os dados informados ou se este e-mail já possui cadastro.'
+      );
+    } catch (error) {
+      console.error('Erro ao criar conta:', error);
+      setFormError('Ocorreu um erro ao criar a conta. Tente novamente.');
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -73,152 +142,195 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           </div>
         </div>
 
-        {/* Existing Quick Switch Profiles */}
-        <div className="mb-6 bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-            Entrar com Perfil Demo Existente:
-          </p>
-          <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
-            {users.map((u) => {
-              const isSelected = u.id === currentUserId;
-              return (
-                <button
-                  key={u.id}
-                  onClick={() => {
-                    onSelectUser(u.id);
-                    onClose();
-                  }}
-                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center justify-between transition border ${
-                    isSelected
-                      ? 'bg-white border-[#45C900] shadow-xs'
-                      : 'bg-white/60 border-slate-200 hover:bg-white'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[11px] ${
-                        u.role === 'professional'
-                          ? 'bg-[#45C900]/20 text-[#2B8A00]'
-                          : u.role === 'admin'
-                          ? 'bg-sky-100 text-sky-800'
-                          : 'bg-slate-200 text-slate-700'
-                      }`}
-                    >
-                      {u.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 leading-tight">{u.name}</p>
-                      <p className="text-[10px] text-slate-500">
-                        {u.organizationName ||
-                          (u.role === 'professional' ? 'Profissional' : 'Contratante')}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400">
-                    {u.role === 'professional' ? 'Prestador' : u.role}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {/* Or Create Custom Account */}
         <div className="border-t border-slate-100 pt-4">
-          <h4 className="text-xs font-bold text-slate-800 mb-2">
-            Ou crie um novo cadastro rápido:
-          </h4>
-
-          {/* Role selector */}
-          <div className="grid grid-cols-3 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             <button
               type="button"
-              onClick={() => setSelectedRole('professional')}
-              className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                selectedRole === 'professional'
-                  ? 'bg-[#071B2F] text-white border-[#071B2F]'
-                  : 'bg-slate-50 text-slate-700 border-slate-200'
+              onClick={() => setLocalMode('login')}
+              className={`py-2.5 rounded-xl text-xs font-black transition ${
+                localMode === 'login'
+                  ? 'bg-[#071B2F] text-white'
+                  : 'bg-slate-100 text-slate-600'
               }`}
             >
-              <Briefcase className="w-4 h-4" />
-              <span>Prestador</span>
+              ENTRAR
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setSelectedRole('contractor');
-                setContractorType('individual');
-              }}
-              className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                selectedRole === 'contractor' && contractorType === 'individual'
-                  ? 'bg-[#071B2F] text-white border-[#071B2F]'
-                  : 'bg-slate-50 text-slate-700 border-slate-200'
+              onClick={() => setLocalMode('signup')}
+              className={`py-2.5 rounded-xl text-xs font-black transition ${
+                localMode === 'signup'
+                  ? 'bg-[#45C900] text-[#071B2F]'
+                  : 'bg-slate-100 text-slate-600'
               }`}
             >
-              <User className="w-4 h-4" />
-              <span>Pessoa Física</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedRole('contractor');
-                setContractorType('condominium');
-              }}
-              className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                selectedRole === 'contractor' && contractorType !== 'individual'
-                  ? 'bg-[#071B2F] text-white border-[#071B2F]'
-                  : 'bg-slate-50 text-slate-700 border-slate-200'
-              }`}
-            >
-              <Building2 className="w-4 h-4" />
-              <span>Empresa</span>
+              CRIAR CONTA
             </button>
           </div>
 
-          <form onSubmit={handleCreate} className="space-y-2.5">
-            <input
-              type="text"
-              required
-              placeholder="Seu Nome Completo"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
-            />
-            <input
-              type="email"
-              required
-              placeholder="Seu E-mail"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
-            />
-            <input
-              type="tel"
-              placeholder="WhatsApp (ex: 84 99999-8888)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
-            />
-
-            {contractorType !== 'individual' && selectedRole === 'contractor' && (
+          {localMode === 'login' ? (
+            <form onSubmit={handleLogin} className="space-y-2.5">
               <input
-                type="text"
-                placeholder="Nome da Empresa / Condomínio"
-                value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
+                type="email"
+                required
+                placeholder="Seu e-mail"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
               />
-            )}
 
-            <button
-              type="submit"
-              className="w-full py-2.5 rounded-xl bg-[#071B2F] hover:bg-[#003A67] text-white text-xs font-black transition shadow-xs"
-            >
-              Concluir & Entrar
-            </button>
-          </form>
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+              />
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-[#45C900] hover:bg-[#59E600] text-[#071B2F] text-xs font-black transition"
+              >
+                ENTRAR NO EURESOLVO
+              </button>
+            </form>
+          ) : (
+            <>
+              <p className="text-xs font-bold text-slate-800 mb-2">
+                Como você deseja usar o EURESOLVO?
+              </p>
+
+              <div className="grid grid-cols-3 gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedRole('professional')}
+                  className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
+                    selectedRole === 'professional'
+                      ? 'bg-[#071B2F] text-white border-[#071B2F]'
+                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <Briefcase className="w-4 h-4" />
+                  <span>Prestador</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole('contractor');
+                    setContractorType('individual');
+                  }}
+                  className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
+                    selectedRole === 'contractor' && contractorType === 'individual'
+                      ? 'bg-[#071B2F] text-white border-[#071B2F]'
+                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <User className="w-4 h-4" />
+                  <span>Pessoa Física</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedRole('contractor');
+                    setContractorType('condominium');
+                  }}
+                  className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
+                    selectedRole === 'contractor' && contractorType !== 'individual'
+                      ? 'bg-[#071B2F] text-white border-[#071B2F]'
+                      : 'bg-slate-50 text-slate-700 border-slate-200'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span>Empresa</span>
+                </button>
+              </div>
+
+              <form onSubmit={handleCreate} className="space-y-2.5">
+                <input
+                  type="text"
+                  required
+                  placeholder="Seu Nome Completo"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+                />
+
+                <input
+                  type="email"
+                  required
+                  placeholder="Seu E-mail"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+                />
+
+                <div>
+                  <input
+                    type="password"
+                    required
+                    minLength={6}
+                    placeholder="Crie uma senha"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setFormError('');
+                    }}
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+                  />
+
+                  <p
+                    className={`mt-1.5 px-1 text-[11px] font-semibold ${
+                      password.length >= 6
+                        ? 'text-[#2B8A00]'
+                        : 'text-slate-500'
+                    }`}
+                  >
+                    {password.length >= 6
+                      ? '✓ Senha válida'
+                      : 'Use pelo menos 6 caracteres'}
+                  </p>
+                </div>
+
+                <input
+                  type="tel"
+                  placeholder="WhatsApp (ex: 84 99999-8888)"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+                />
+
+                {contractorType !== 'individual' && selectedRole === 'contractor' && (
+                  <input
+                    type="text"
+                    placeholder="Nome da Empresa / Condomínio"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+                  />
+                )}
+
+                {formError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-[11px] font-semibold text-red-700">
+                    {formError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="w-full py-2.5 rounded-xl bg-[#071B2F] hover:bg-[#003A67] disabled:opacity-60 disabled:cursor-not-allowed text-white text-xs font-black transition"
+                >
+                  {isCreating ? 'CRIANDO CONTA...' : 'CRIAR MINHA CONTA'}
+                </button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>

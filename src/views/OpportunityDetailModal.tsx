@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ServiceRequest, ServiceApplication, UserProfile } from '../types';
 import {
   X,
@@ -16,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { StarRating } from '../components/StarRating';
+import { supabase } from '../services/supabase';
 
 interface OpportunityDetailModalProps {
   request: ServiceRequest | null;
@@ -40,6 +41,57 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
 }) => {
   const [customMessage, setCustomMessage] = useState('');
   const [showApplyBox, setShowApplyBox] = useState(false);
+  const [contactData, setContactData] = useState<{
+    professionalName?: string;
+    professionalPhone?: string;
+    professionalWhatsapp?: string;
+    contractorName?: string;
+    contractorPhone?: string;
+    contractorWhatsapp?: string;
+    serviceAddress?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || !request || !request.contactUnlocked || !supabase) {
+      setContactData(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadContact = async () => {
+      const { data, error } = await supabase.rpc(
+        "get_selected_contact_for_request",
+        { p_request_id: request.id }
+      );
+
+      if (error) {
+        console.error("Erro ao carregar contatos liberados:", error);
+        if (!cancelled) setContactData(null);
+        return;
+      }
+
+      const contact = data?.[0];
+
+      if (!cancelled && contact) {
+        setContactData({
+          professionalName: contact.professional_name || undefined,
+          professionalPhone: contact.professional_phone || undefined,
+          professionalWhatsapp: contact.professional_whatsapp || undefined,
+          contractorName: contact.contractor_name || undefined,
+          contractorPhone: contact.contractor_phone || undefined,
+          contractorWhatsapp: contact.contractor_whatsapp || undefined,
+          serviceAddress: contact.service_address || undefined,
+        });
+      }
+    };
+
+    loadContact();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, request?.id, request?.contactUnlocked]);
 
   if (!isOpen || !request) return null;
 
@@ -184,41 +236,111 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
         )}
 
         {/* Selected Contact Section (When professional is selected) */}
-        {request.contactUnlocked && (
+        {request.contactUnlocked && (isOwner || isSelectedPro) && (
           <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 mb-6 animate-fade-in">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
                 <CheckCircle2 className="w-4 h-4 text-[#45C900]" />
-                <span>Contato e WhatsApp Liberados com Segurança</span>
+                <span>Dados liberados com segurança</span>
               </div>
               <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-100 px-2 py-0.5 rounded-full">
-                LGPD Protegido
+                Acesso restrito
               </span>
             </div>
-            <p className="text-xs text-emerald-800 mb-3">
-              Profissional selecionado:{' '}
-              <strong>{request.selectedProfessionalName}</strong>. Já podem combinar os detalhes finais da chegada:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <a
-                href="https://wa.me/5584994223180?text=Olá!%20Vi%20sua%20solicitação%20no%20EURESOLVO"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25D366] text-white font-bold text-xs shadow-xs hover:bg-[#20bd5a] transition"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Conversar pelo WhatsApp</span>
-              </a>
-              {isOwner && !isResolved && onMarkResolved && (
-                <button
-                  onClick={() => onMarkResolved(request.id)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#071B2F] text-white font-bold text-xs hover:bg-[#003A67] transition"
-                >
-                  <CheckCircle2 className="w-4 h-4 text-[#45C900]" />
-                  <span>Marcar como RESOLVIDO ✓</span>
-                </button>
-              )}
-            </div>
+
+            {isOwner ? (
+              <>
+                <p className="text-xs text-emerald-800 mb-3">
+                  Profissional selecionado:{' '}
+                  <strong>
+                    {contactData?.professionalName ||
+                      request.selectedProfessionalName ||
+                      "Profissional"}
+                  </strong>
+                </p>
+
+                <div className="flex flex-wrap gap-2">
+                  {contactData?.professionalWhatsapp && (
+                    <a
+                      href={`https://wa.me/${contactData.professionalWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                        `Olá, ${contactData.professionalName || "profissional"}! Te selecionei no EURESOLVO para o serviço "${request.title}".`
+                      )}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25D366] text-white font-bold text-xs shadow-xs hover:bg-[#20bd5a] transition"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Falar no WhatsApp</span>
+                    </a>
+                  )}
+
+                  {contactData?.professionalPhone && (
+                    <a
+                      href={`tel:${contactData.professionalPhone}`}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-emerald-200 text-emerald-900 font-bold text-xs"
+                    >
+                      <Phone className="w-4 h-4" />
+                      <span>{contactData.professionalPhone}</span>
+                    </a>
+                  )}
+
+                  {isOwner && !isResolved && onMarkResolved && (
+                    <button
+                      onClick={() => onMarkResolved(request.id)}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#071B2F] text-white font-bold text-xs hover:bg-[#003A67] transition"
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-[#45C900]" />
+                      <span>Marcar como RESOLVIDO ✓</span>
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-emerald-800 mb-3">
+                  Você foi selecionado para esta demanda. Agora pode combinar os detalhes diretamente com o contratante.
+                </p>
+
+                <div className="space-y-2 text-xs text-emerald-900 mb-3">
+                  <p>
+                    <strong>Contratante:</strong>{' '}
+                    {contactData?.contractorName || request.contractorName}
+                  </p>
+
+                  {contactData?.serviceAddress && (
+                    <p>
+                      <strong>Endereço:</strong>{' '}
+                      {contactData.serviceAddress}
+                    </p>
+                  )}
+
+                  {contactData?.contractorPhone && (
+                    <p>
+                      <strong>Telefone:</strong>{' '}
+                      {contactData.contractorPhone}
+                    </p>
+                  )}
+                </div>
+
+                {contactData?.contractorWhatsapp ? (
+                  <a
+                    href={`https://wa.me/${contactData.contractorWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
+                      `Olá! Fui selecionado no EURESOLVO para o serviço "${request.title}".`
+                    )}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#25D366] text-white font-bold text-xs shadow-xs hover:bg-[#20bd5a] transition"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>Falar com o contratante</span>
+                  </a>
+                ) : (
+                  <span className="inline-flex px-4 py-2 rounded-xl bg-white border border-emerald-200 text-emerald-700 font-bold text-xs">
+                    WhatsApp não informado
+                  </span>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -275,7 +397,11 @@ export const OpportunityDetailModal: React.FC<OpportunityDetailModalProps> = ({
 
         {/* Action Button: "EU RESOLVO" for Professional view */}
         {!isResolved && currentUser.role === 'professional' && (
-          hasApplied ? (
+          isSelectedPro ? (
+            <div className="p-4 rounded-2xl bg-[#45C900]/15 text-[#2B8A00] border border-[#45C900]/30 text-center font-bold text-sm">
+              ✓ Você foi selecionado para esta oportunidade!
+            </div>
+          ) : hasApplied ? (
             <div className="p-4 rounded-2xl bg-[#45C900]/15 text-[#2B8A00] border border-[#45C900]/30 text-center font-bold text-sm">
               ✓ Você já demonstrou interesse nesta oportunidade. Aguarde o retorno do contratante!
             </div>
