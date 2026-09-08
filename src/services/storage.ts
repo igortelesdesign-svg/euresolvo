@@ -9,7 +9,6 @@ import {
 import {
   INITIAL_USERS,
   INITIAL_PROFESSIONALS,
-  INITIAL_REQUESTS,
   INITIAL_APPLICATIONS,
   INITIAL_REVIEWS,
   INITIAL_NOTIFICATIONS,
@@ -52,17 +51,8 @@ export const AppStorage = {
   setProfessionals: (pros: ProfessionalProfile[]) =>
     safeSet(STORAGE_KEYS.PROFESSIONALS, pros),
 
-  getRequests: (): ServiceRequest[] => {
-    const saved = safeGet<ServiceRequest[]>(STORAGE_KEYS.REQUESTS, []);
-
-    const savedIds = new Set(saved.map((request) => request.id));
-
-    const missingInitialRequests = INITIAL_REQUESTS.filter(
-      (request) => !savedIds.has(request.id)
-    );
-
-    return [...saved, ...missingInitialRequests];
-  },
+  getRequests: (): ServiceRequest[] =>
+    safeGet(STORAGE_KEYS.REQUESTS, []),
   setRequests: (requests: ServiceRequest[]) =>
     safeSet(STORAGE_KEYS.REQUESTS, requests),
 
