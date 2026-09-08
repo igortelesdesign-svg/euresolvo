@@ -1393,6 +1393,58 @@ export function useAppState() {
     return true;
   }, [showToast]);
 
+  const updateAvatar = useCallback(
+    async (file: File): Promise<boolean> => {
+      if (supabase === null || !currentUserId) {
+        showToast('Não foi possível atualizar a foto.', 'warning');
+        return false;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        showToast('Selecione uma imagem válida.', 'warning');
+        return false;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('A foto deve ter no máximo 2 MB.', 'warning');
+        return false;
+      }
+
+      const avatarUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error('Falha ao ler a imagem'));
+        reader.readAsDataURL(file);
+      }).catch(() => '');
+
+      if (!avatarUrl) {
+        showToast('Não foi possível processar a foto.', 'warning');
+        return false;
+      }
+
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: avatarUrl })
+        .eq('id', currentUserId);
+
+      if (error) {
+        console.error('Erro ao atualizar avatar:', error);
+        showToast('Não foi possível salvar a foto.', 'warning');
+        return false;
+      }
+
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id === currentUserId ? { ...user, avatarUrl } : user
+        )
+      );
+
+      showToast('Foto de perfil atualizada.', 'success');
+      return true;
+    },
+    [currentUserId, showToast]
+  );
+
   const markAllNotificationsRead = useCallback(() => {
     setNotifications((prev) =>
       prev.map((n) => (n.userId === currentUserId ? { ...n, read: true } : n))
@@ -1439,6 +1491,7 @@ export function useAppState() {
     registerUser,
     loginUser,
     logoutUser,
+    updateAvatar,
     applyToRequest,
     selectProfessional,
     selectProfessionalForRequest: selectProfessional,

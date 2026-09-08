@@ -51,6 +51,7 @@ export default function App() {
     registerUser,
     loginUser,
     logoutUser,
+    updateAvatar,
     isAuthenticated,
     toggleAvailableNow,
     updateWeeklySchedule,
@@ -287,6 +288,7 @@ export default function App() {
             onApplyToRequest={handleApplyToRequest}
             onSelectRequest={handleSelectRequest}
             onNavigate={setActiveView}
+            onUpdateAvatar={updateAvatar}
           />
         )}
 
@@ -314,6 +316,7 @@ export default function App() {
             onApplyToRequest={handleApplyToRequest}
             onSelectRequest={handleSelectRequest}
             onNavigate={setActiveView}
+            onUpdateAvatar={updateAvatar}
           />
         )}
 

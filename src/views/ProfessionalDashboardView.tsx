@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import {
   UserProfile,
   ProfessionalProfile,
@@ -19,6 +19,8 @@ import {
   Bell,
   ArrowRight,
   Sparkles,
+  Camera,
+  Loader2,
 } from 'lucide-react';
 import { ActiveView } from '../hooks/useAppState';
 
@@ -32,6 +34,7 @@ interface ProfessionalDashboardViewProps {
   onApplyToRequest: (requestId: string) => void;
   onSelectRequest: (requestId: string) => void;
   onNavigate: (view: ActiveView) => void;
+  onUpdateAvatar: (file: File) => Promise<boolean>;
 }
 
 export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps> = ({
@@ -44,7 +47,22 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
   onApplyToRequest,
   onSelectRequest,
   onNavigate,
+  onUpdateAvatar,
 }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  const handleAvatarChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAvatar(true);
+    await onUpdateAvatar(file);
+    setIsUploadingAvatar(false);
+    event.target.value = '';
+  };
   if (!profile) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-16 text-center">
@@ -72,15 +90,39 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
       {/* Welcome Banner */}
       <div className="bg-gradient-to-r from-[#071B2F] to-[#003A67] text-white rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <img
-            src={
-              currentUser.avatarUrl ||
-              'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&q=80&w=200'
-            }
-            alt={currentUser.name}
-            referrerPolicy="no-referrer"
-            className="w-16 h-16 rounded-2xl object-cover border-2 border-white/30"
-          />
+          <div className="relative shrink-0">
+            <img
+              src={
+                currentUser.avatarUrl ||
+                'https://images.unsplash.com/photo-1540569014015-19a7be504e3a?auto=format&fit=crop&q=80&w=200'
+              }
+              alt={currentUser.name}
+              referrerPolicy="no-referrer"
+              className="w-16 h-16 rounded-2xl object-cover border-2 border-white/30"
+            />
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isUploadingAvatar}
+              aria-label="Alterar foto de perfil"
+              className="absolute -bottom-2 -right-2 w-9 h-9 rounded-full bg-[#45C900] text-[#071B2F] border-2 border-[#071B2F] flex items-center justify-center shadow-lg disabled:opacity-60"
+            >
+              {isUploadingAvatar ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Camera className="w-4 h-4" />
+              )}
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+          </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-xl sm:text-2xl font-black">{currentUser.name}</h1>
