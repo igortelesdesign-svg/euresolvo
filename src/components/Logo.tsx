@@ -30,7 +30,7 @@ export const Logo: React.FC<LogoProps> = ({
             alt="EURESOLVO"
             referrerPolicy="no-referrer"
             onError={() => setImgFailed(true)}
-            className="h-14 sm:h-16 w-auto object-contain max-w-[320px] transition-transform duration-150 hover:scale-[1.02]"
+            className="h-10 sm:h-16 w-auto object-contain max-w-[220px] sm:max-w-[320px] transition-transform duration-150 hover:scale-[1.02]"
           />
         ) : (
           <div className="flex items-center gap-2">
