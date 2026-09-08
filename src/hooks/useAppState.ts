@@ -1460,7 +1460,7 @@ export function useAppState() {
 
         if (error) {
           console.error('Erro ao atualizar avatar:', error);
-          showToast('Não foi possível salvar a foto.', 'warning');
+          showToast('Erro ao salvar: ' + error.message, 'warning');
           return false;
         }
 
