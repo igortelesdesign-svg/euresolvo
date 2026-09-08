@@ -8,7 +8,6 @@ import {
 } from '../types';
 import {
   INITIAL_USERS,
-  INITIAL_PROFESSIONALS,
   INITIAL_APPLICATIONS,
   INITIAL_REVIEWS,
   INITIAL_NOTIFICATIONS,
@@ -47,7 +46,7 @@ export const AppStorage = {
   setUsers: (users: UserProfile[]) => safeSet(STORAGE_KEYS.USERS, users),
 
   getProfessionals: (): ProfessionalProfile[] =>
-    safeGet(STORAGE_KEYS.PROFESSIONALS, INITIAL_PROFESSIONALS),
+    safeGet(STORAGE_KEYS.PROFESSIONALS, []),
   setProfessionals: (pros: ProfessionalProfile[]) =>
     safeSet(STORAGE_KEYS.PROFESSIONALS, pros),
 
