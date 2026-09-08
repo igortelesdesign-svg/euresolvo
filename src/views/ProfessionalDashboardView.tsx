@@ -181,12 +181,18 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
           <span className="text-xs font-semibold text-slate-500">Média de Avaliação</span>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-2xl sm:text-3xl font-black text-slate-900">
-              {profile.rating.toFixed(1)}
+              {profile.totalReviews > 0 ? profile.rating.toFixed(1) : '—'}
             </span>
-            <StarRating rating={profile.rating} size="sm" showNumber={false} />
+            <StarRating
+              rating={profile.totalReviews > 0 ? profile.rating : 0}
+              size="sm"
+              showNumber={false}
+            />
           </div>
           <span className="text-[11px] text-slate-500 mt-1 block">
-            {profile.totalReviews} avaliações registradas
+            {profile.totalReviews > 0
+              ? `${profile.totalReviews} avaliações registradas`
+              : 'Sem avaliações ainda'}
           </span>
         </div>
 
@@ -194,12 +200,12 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
           <span className="text-xs font-semibold text-slate-500">Taxa de Pontualidade</span>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-2xl sm:text-3xl font-black text-slate-900">
-              {profile.completionRate}%
+              {profile.resolvedCount > 0 ? `${profile.completionRate}%` : '—'}
             </span>
             <Clock className="w-5 h-5 text-sky-600" />
           </div>
           <span className="text-[11px] text-sky-800 font-semibold mt-1 block">
-            Alta confiabilidade
+            {profile.resolvedCount > 0 ? 'Histórico de pontualidade' : 'Sem histórico ainda'}
           </span>
         </div>
 

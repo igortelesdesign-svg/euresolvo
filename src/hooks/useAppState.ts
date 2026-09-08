@@ -1196,7 +1196,7 @@ export function useAppState() {
             categories: ['Manutenção e Instalações', 'Casa & Condomínio'],
             subcategories: ['Instalações', 'Reparos', 'Manutenção'],
             experienceYears: 5,
-            rating: 5.0,
+            rating: 0,
             totalReviews: 0,
             resolvedCount: 0,
             score: 0,
@@ -1333,7 +1333,7 @@ export function useAppState() {
             categories: ['Manutenção e Instalações', 'Casa & Condomínio'],
             subcategories: ['Instalações', 'Reparos', 'Manutenção'],
             experienceYears: 0,
-            rating: 5.0,
+            rating: 0,
             totalReviews: 0,
             resolvedCount: 0,
             score: 0,
@@ -1405,42 +1405,81 @@ export function useAppState() {
         return false;
       }
 
-      if (file.size > 2 * 1024 * 1024) {
-        showToast('A foto deve ter no máximo 2 MB.', 'warning');
+      try {
+        const avatarUrl = await new Promise<string>((resolve, reject) => {
+          const image = new Image();
+          const objectUrl = URL.createObjectURL(file);
+
+          image.onload = () => {
+            try {
+              const maxSize = 800;
+              const scale = Math.min(
+                1,
+                maxSize / Math.max(image.width, image.height)
+              );
+
+              const width = Math.max(1, Math.round(image.width * scale));
+              const height = Math.max(1, Math.round(image.height * scale));
+
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+
+              const ctx = canvas.getContext('2d');
+
+              if (!ctx) {
+                URL.revokeObjectURL(objectUrl);
+                reject(new Error('Canvas indisponível'));
+                return;
+              }
+
+              ctx.drawImage(image, 0, 0, width, height);
+
+              const compressed = canvas.toDataURL('image/jpeg', 0.82);
+
+              URL.revokeObjectURL(objectUrl);
+              resolve(compressed);
+            } catch (error) {
+              URL.revokeObjectURL(objectUrl);
+              reject(error);
+            }
+          };
+
+          image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('Formato de imagem não suportado'));
+          };
+
+          image.src = objectUrl;
+        });
+
+        const { error } = await supabase
+          .from('profiles')
+          .update({ avatar_url: avatarUrl })
+          .eq('id', currentUserId);
+
+        if (error) {
+          console.error('Erro ao atualizar avatar:', error);
+          showToast('Não foi possível salvar a foto.', 'warning');
+          return false;
+        }
+
+        setUsers((prev) =>
+          prev.map((user) =>
+            user.id === currentUserId ? { ...user, avatarUrl } : user
+          )
+        );
+
+        showToast('Foto de perfil atualizada.', 'success');
+        return true;
+      } catch (error) {
+        console.error('Erro ao processar avatar:', error);
+        showToast(
+          'Não foi possível processar esta foto. Tente outra imagem.',
+          'warning'
+        );
         return false;
       }
-
-      const avatarUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error('Falha ao ler a imagem'));
-        reader.readAsDataURL(file);
-      }).catch(() => '');
-
-      if (!avatarUrl) {
-        showToast('Não foi possível processar a foto.', 'warning');
-        return false;
-      }
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ avatar_url: avatarUrl })
-        .eq('id', currentUserId);
-
-      if (error) {
-        console.error('Erro ao atualizar avatar:', error);
-        showToast('Não foi possível salvar a foto.', 'warning');
-        return false;
-      }
-
-      setUsers((prev) =>
-        prev.map((user) =>
-          user.id === currentUserId ? { ...user, avatarUrl } : user
-        )
-      );
-
-      showToast('Foto de perfil atualizada.', 'success');
-      return true;
     },
     [currentUserId, showToast]
   );

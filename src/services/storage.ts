@@ -18,10 +18,10 @@ import {
 const STORAGE_KEYS = {
   USERS: 'euresolvo_users_v1',
   PROFESSIONALS: 'euresolvo_professionals_v1',
-  REQUESTS: 'euresolvo_requests_v1',
-  APPLICATIONS: 'euresolvo_applications_v1',
-  REVIEWS: 'euresolvo_reviews_v1',
-  NOTIFICATIONS: 'euresolvo_notifications_v1',
+  REQUESTS: 'euresolvo_requests_v2',
+  APPLICATIONS: 'euresolvo_applications_v2',
+  REVIEWS: 'euresolvo_reviews_v2',
+  NOTIFICATIONS: 'euresolvo_notifications_v2',
   CURRENT_USER_ID: 'euresolvo_current_user_id_v1',
   FAVORITES: 'euresolvo_favorites_v1',
 };
@@ -67,15 +67,15 @@ export const AppStorage = {
     safeSet(STORAGE_KEYS.REQUESTS, requests),
 
   getApplications: (): ServiceApplication[] =>
-    safeGet(STORAGE_KEYS.APPLICATIONS, INITIAL_APPLICATIONS),
+    safeGet(STORAGE_KEYS.APPLICATIONS, []),
   setApplications: (apps: ServiceApplication[]) =>
     safeSet(STORAGE_KEYS.APPLICATIONS, apps),
 
-  getReviews: (): Review[] => safeGet(STORAGE_KEYS.REVIEWS, INITIAL_REVIEWS),
+  getReviews: (): Review[] => safeGet(STORAGE_KEYS.REVIEWS, []),
   setReviews: (reviews: Review[]) => safeSet(STORAGE_KEYS.REVIEWS, reviews),
 
   getNotifications: (): NotificationItem[] =>
-    safeGet(STORAGE_KEYS.NOTIFICATIONS, INITIAL_NOTIFICATIONS),
+    safeGet(STORAGE_KEYS.NOTIFICATIONS, []),
   setNotifications: (notifs: NotificationItem[]) =>
     safeSet(STORAGE_KEYS.NOTIFICATIONS, notifs),
 
