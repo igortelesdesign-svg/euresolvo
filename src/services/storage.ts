@@ -7,15 +7,14 @@ import {
   NotificationItem,
 } from '../types';
 import {
-  INITIAL_USERS,
   INITIAL_APPLICATIONS,
   INITIAL_REVIEWS,
   INITIAL_NOTIFICATIONS,
 } from '../data/mockData';
 
 const STORAGE_KEYS = {
-  USERS: 'euresolvo_users_v1',
-  PROFESSIONALS: 'euresolvo_professionals_v1',
+  USERS: 'euresolvo_users_v2',
+  PROFESSIONALS: 'euresolvo_professionals_v2',
   REQUESTS: 'euresolvo_requests_v2',
   APPLICATIONS: 'euresolvo_applications_v2',
   REVIEWS: 'euresolvo_reviews_v2',
@@ -42,7 +41,7 @@ function safeSet<T>(key: string, value: T): void {
 }
 
 export const AppStorage = {
-  getUsers: (): UserProfile[] => safeGet(STORAGE_KEYS.USERS, INITIAL_USERS),
+  getUsers: (): UserProfile[] => safeGet(STORAGE_KEYS.USERS, []),
   setUsers: (users: UserProfile[]) => safeSet(STORAGE_KEYS.USERS, users),
 
   getProfessionals: (): ProfessionalProfile[] =>
