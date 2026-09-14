@@ -29,6 +29,7 @@ export interface UserProfile {
   email: string;
   name: string;
   professionalName?: string;
+  professionalCategory?: string;
   role: UserRole;
   phone?: string;
   whatsapp?: string;

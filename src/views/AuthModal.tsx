@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { X, User, Briefcase, Building2, CheckCircle2, Shield } from 'lucide-react';
 import { UserProfile, UserRole, ContractorType } from '../types';
 import { LogoIcon } from '../components/LogoIcon';
+import { SERVICE_CATEGORIES } from '../data/categories';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -32,6 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('Natal');
   const [orgName, setOrgName] = useState('');
+  const [professionalCategory, setProfessionalCategory] = useState('');
   const [formError, setFormError] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [localMode, setLocalMode] = useState<'login' | 'signup'>(
@@ -93,6 +95,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       email: email.trim(),
       name: name.trim(),
       role: selectedRole,
+      professionalCategory: selectedRole === 'professional' ? professionalCategory : undefined,
       phone: phone || '(84) 99999-8888',
       whatsapp: phone || '(84) 99999-8888',
       whatsappNotifications: true,
@@ -296,6 +299,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       : 'Use pelo menos 6 caracteres'}
                   </p>
                 </div>
+
+                {selectedRole === 'professional' && (
+                  <select
+                    required
+                    value={professionalCategory}
+                    onChange={(e) => setProfessionalCategory(e.target.value)}
+                    className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none bg-white"
+                  >
+                    <option value="">Selecione sua área de atuação</option>
+                    {SERVICE_CATEGORIES.map((category) => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
 
                 <input
                   type="tel"
