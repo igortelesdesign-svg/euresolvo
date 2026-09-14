@@ -7,6 +7,7 @@ import {
   NotificationItem,
 } from '../types';
 import {
+  INITIAL_USERS,
   INITIAL_APPLICATIONS,
   INITIAL_REVIEWS,
   INITIAL_NOTIFICATIONS,
@@ -41,7 +42,7 @@ function safeSet<T>(key: string, value: T): void {
 }
 
 export const AppStorage = {
-  getUsers: (): UserProfile[] => safeGet(STORAGE_KEYS.USERS, []),
+  getUsers: (): UserProfile[] => safeGet(STORAGE_KEYS.USERS, INITIAL_USERS),
   setUsers: (users: UserProfile[]) => safeSet(STORAGE_KEYS.USERS, users),
 
   getProfessionals: (): ProfessionalProfile[] =>
