@@ -267,6 +267,46 @@ export function useAppState() {
 
       setCurrentUserId(restoredUser.id);
 
+      if (restoredUser.role === 'professional') {
+        setProfessionals((prev) => {
+          const exists = prev.some((p) => p.userId === restoredUser.id);
+
+          if (exists) return prev;
+
+          const newPro: ProfessionalProfile = {
+            id: `pro_${restoredUser.id}`,
+            userId: restoredUser.id,
+            bio: 'Profissional capacitado pronto para atender com qualidade e pontualidade.',
+            mainCategory: restoredUser.professionalCategory || 'Não informado',
+            categories: restoredUser.professionalCategory ? [restoredUser.professionalCategory] : [],
+            subcategories: [],
+            experienceYears: 0,
+            rating: 0,
+            totalReviews: 0,
+            resolvedCount: 0,
+            score: 0,
+            completionRate: 100,
+            isAvailableNow: true,
+            serviceAreas: [restoredUser.city || 'Natal'],
+            inPersonService: true,
+            remoteService: false,
+            emergencyService: false,
+            weeklySchedule: DEFAULT_WEEKLY_SCHEDULE,
+            badges: [
+              {
+                id: 'badge_new',
+                code: 'new',
+                label: 'Novo Profissional',
+                description: 'Profissional ativo e pronto para atender.',
+                color: 'emerald',
+              },
+            ],
+          };
+
+          return [newPro, ...prev];
+        });
+      }
+
       let restoredRequestsFromDb: ServiceRequest[] = [];
 
       const { data: savedRequests, error: requestsError } =
