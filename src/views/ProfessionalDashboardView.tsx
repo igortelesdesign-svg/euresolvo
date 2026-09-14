@@ -23,6 +23,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { ActiveView } from '../hooks/useAppState';
+import { SERVICE_CATEGORIES } from '../data/categories';
 
 interface ProfessionalDashboardViewProps {
   currentUser: UserProfile;
@@ -31,6 +32,7 @@ interface ProfessionalDashboardViewProps {
   applications: ServiceApplication[];
   onToggleAvailableNow: () => void;
   onSaveSchedule: (schedule: any) => void;
+  onUpdateProfessionalCategory: (category: string) => Promise<boolean>;
   onApplyToRequest: (requestId: string) => void;
   onSelectRequest: (requestId: string) => void;
   onNavigate: (view: ActiveView) => void;
@@ -44,6 +46,7 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
   applications,
   onToggleAvailableNow,
   onSaveSchedule,
+  onUpdateProfessionalCategory,
   onApplyToRequest,
   onSelectRequest,
   onNavigate,
@@ -133,6 +136,22 @@ export const ProfessionalDashboardView: React.FC<ProfessionalDashboardViewProps>
             <p className="text-xs text-slate-300 mt-0.5">
               {profile.mainCategory} • Polo {currentUser.city} - {currentUser.state}
             </p>
+
+            <select
+              value={profile.mainCategory}
+              onChange={(e) => onUpdateProfessionalCategory(e.target.value)}
+              className="mt-2 w-full max-w-xs rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white outline-none focus:border-[#45C900]"
+            >
+              {SERVICE_CATEGORIES.map((category) => (
+                <option
+                  key={category.id}
+                  value={category.name}
+                  className="text-slate-900"
+                >
+                  {category.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
 

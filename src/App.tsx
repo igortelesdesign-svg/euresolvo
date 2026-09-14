@@ -55,6 +55,7 @@ export default function App() {
     isAuthenticated,
     toggleAvailableNow,
     updateWeeklySchedule,
+    updateProfessionalCategory,
     publishServiceRequest,
     applyToRequest,
     selectProfessionalForRequest,
@@ -285,6 +286,7 @@ export default function App() {
             applications={applications}
             onToggleAvailableNow={toggleAvailableNow}
             onSaveSchedule={updateWeeklySchedule}
+            onUpdateProfessionalCategory={updateProfessionalCategory}
             onApplyToRequest={handleApplyToRequest}
             onSelectRequest={handleSelectRequest}
             onNavigate={setActiveView}
@@ -313,6 +315,7 @@ export default function App() {
             applications={applications}
             onToggleAvailableNow={toggleAvailableNow}
             onSaveSchedule={updateWeeklySchedule}
+            onUpdateProfessionalCategory={updateProfessionalCategory}
             onApplyToRequest={handleApplyToRequest}
             onSelectRequest={handleSelectRequest}
             onNavigate={setActiveView}

@@ -947,6 +947,49 @@ export function useAppState() {
     [currentProProfile, showToast]
   );
 
+  // Update professional category
+  const updateProfessionalCategory = useCallback(
+    async (category: string) => {
+      if (!currentProProfile || !currentUser || !supabase) return false;
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          professional_category: category,
+        },
+      });
+
+      if (error) {
+        console.error('Erro ao atualizar área profissional:', error);
+        showToast('Não foi possível atualizar sua área de atuação.', 'error');
+        return false;
+      }
+
+      setProfessionals((prev) =>
+        prev.map((p) =>
+          p.id === currentProProfile.id
+            ? {
+                ...p,
+                mainCategory: category,
+                categories: [category],
+              }
+            : p
+        )
+      );
+
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === currentUser.id
+            ? { ...u, professionalCategory: category }
+            : u
+        )
+      );
+
+      showToast('Área de atuação atualizada com sucesso!', 'success');
+      return true;
+    },
+    [currentProProfile, currentUser, showToast]
+  );
+
   // Toggle Favorite
   const toggleFavorite = useCallback(
     (proId: string) => {
@@ -1543,6 +1586,7 @@ export function useAppState() {
     addReview: submitReview,
     toggleAvailableNow,
     updateWeeklySchedule,
+    updateProfessionalCategory,
     toggleFavorite,
     publishRequest,
     publishServiceRequest: publishRequest,
