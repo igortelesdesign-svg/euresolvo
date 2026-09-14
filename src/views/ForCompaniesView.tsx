@@ -44,7 +44,7 @@ export const ForCompaniesView: React.FC<ForCompaniesViewProps> = ({
               Publicar Demanda Condominial / Corporativa →
             </button>
             <a
-              href="https://wa.me/5584994223180?text=Olá!%20Sou%20síndico/gestor%20e%20gostaria%20de%20atendimento%20para%20condomínio"
+              href="https://wa.me/5584981213101?text=Olá!%20Sou%20síndico/gestor%20e%20gostaria%20de%20atendimento%20para%20condomínio"
               target="_blank"
               rel="noreferrer"
               className="px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs transition border border-white/20 flex items-center gap-2"

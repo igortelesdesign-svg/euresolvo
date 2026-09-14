@@ -159,7 +159,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onOpenTerms }) => {
               </div>
               <div className="flex items-center gap-1.5">
                 <Phone className="w-3.5 h-3.5 text-[#59E600]" />
-                <span>WhatsApp: (84) 99422-3180</span>
+                <span>WhatsApp: (84) 98121-3101</span>
               </div>
             </div>
           </div>
