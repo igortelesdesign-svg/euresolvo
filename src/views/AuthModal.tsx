@@ -169,7 +169,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   : 'bg-slate-100 text-slate-600'
               }`}
             >
-              CRIAR CONTA
+              QUERO ME CADASTRAR
             </button>
           </div>
 
@@ -218,7 +218,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }`}
                 >
                   <Briefcase className="w-4 h-4" />
-                  <span>Prestador</span>
+                  <span>Sou Profissional</span>
                 </button>
 
                 <button
@@ -234,23 +234,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   }`}
                 >
                   <User className="w-4 h-4" />
-                  <span>Pessoa Física</span>
+                  <span>Preciso de um serviço</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => {
                     setSelectedRole('contractor');
-                    setContractorType('condominium');
+                    setContractorType('company');
                   }}
                   className={`p-2 rounded-xl text-center border text-xs font-bold transition flex flex-col items-center gap-1 ${
-                    selectedRole === 'contractor' && contractorType !== 'individual'
+                    selectedRole === 'contractor' && contractorType === 'company'
                       ? 'bg-[#071B2F] text-white border-[#071B2F]'
                       : 'bg-slate-50 text-slate-700 border-slate-200'
                   }`}
                 >
                   <Building2 className="w-4 h-4" />
-                  <span>Empresa</span>
+                  <span>Empresa / Condomínio</span>
                 </button>
               </div>
 
