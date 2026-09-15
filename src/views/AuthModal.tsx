@@ -39,6 +39,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
+  const [whatsappConsent, setWhatsappConsent] = useState(false);
   const [city, setCity] = useState('Natal');
   const [orgName, setOrgName] = useState('');
   const [professionalCategory, setProfessionalCategory] = useState('');
@@ -56,6 +57,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setEmail('');
       setPassword('');
       setPhone('');
+      setWhatsappConsent(false);
       setCity('Natal');
       setOrgName('');
       setFormError('');
@@ -98,15 +100,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       return;
     }
 
+    const phoneDigits = phone.split('').filter((char) => char >= '0' && char <= '9').join('');
+
+    if (phone.trim() && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      setFormError('Informe um WhatsApp válido com DDD.');
+      return;
+    }
+
     const newUser: UserProfile = {
       id: `user_${Date.now()}`,
       email: email.trim(),
       name: name.trim(),
       role: selectedRole,
       professionalCategory: selectedRole === 'professional' ? professionalCategory : undefined,
-      phone: phone || '(84) 99999-8888',
-      whatsapp: phone || '(84) 99999-8888',
-      whatsappNotifications: true,
+      phone: phoneDigits || undefined,
+      whatsapp: phoneDigits || undefined,
+      whatsappNotifications: phone.trim() ? whatsappConsent : false,
       city,
       state: 'RN',
       contractorType: selectedRole === 'contractor' ? contractorType : undefined,
@@ -414,6 +423,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   onChange={(e) => setPhone(e.target.value)}
                   className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
                 />
+
+                {phone.trim() && (
+                  <label className="flex items-start gap-2 rounded-xl bg-slate-50 border border-slate-200 p-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={whatsappConsent}
+                      onChange={(e) => setWhatsappConsent(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-[#45C900]"
+                    />
+                    <span className="text-[10px] leading-relaxed text-slate-600">
+                      Aceito receber pelo WhatsApp comunicações relacionadas à minha conta, oportunidades e serviços do EURESOLVO.
+                    </span>
+                  </label>
+                )}
 
                 {contractorType !== 'individual' && selectedRole === 'contractor' && (
                   <input
