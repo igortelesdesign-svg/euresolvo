@@ -51,9 +51,11 @@ export default function App() {
     registerUser,
     loginUser,
     sendPasswordReset,
+    updatePassword,
     logoutUser,
     updateAvatar,
     isAuthenticated,
+    isPasswordRecovery,
     toggleAvailableNow,
     updateWeeklySchedule,
     updateProfessionalCategory,
@@ -392,7 +394,7 @@ export default function App() {
 
       {/* Auth / Profile Switcher Modal */}
       <AuthModal
-        isOpen={isAuthModalOpen}
+        isOpen={isAuthModalOpen || isPasswordRecovery}
         mode={authMode}
         users={users}
         currentUserId={currentUser.id}
@@ -401,6 +403,8 @@ export default function App() {
         onCreateUser={registerUser}
         onLoginUser={loginUser}
         onPasswordReset={sendPasswordReset}
+        isPasswordRecovery={isPasswordRecovery}
+        onUpdatePassword={updatePassword}
       />
 
       {/* Terms, LGPD & Privacy Modal */}

@@ -14,6 +14,8 @@ interface AuthModalProps {
   onCreateUser: (newUser: UserProfile, password: string) => Promise<boolean>;
   onLoginUser: (email: string, password: string) => Promise<boolean>;
   onPasswordReset: (email: string) => Promise<boolean>;
+  isPasswordRecovery: boolean;
+  onUpdatePassword: (password: string) => Promise<boolean>;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -26,12 +28,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onCreateUser,
   onLoginUser,
   onPasswordReset,
+  isPasswordRecovery,
+  onUpdatePassword,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>('professional');
   const [contractorType, setContractorType] = useState<ContractorType>('individual');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('Natal');
   const [orgName, setOrgName] = useState('');
@@ -129,6 +135,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    if (newPassword.length < 6) {
+      setFormError('A nova senha precisa ter pelo menos 6 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setFormError('As senhas não coincidem.');
+      return;
+    }
+
+    try {
+      setIsCreating(true);
+      await onUpdatePassword(newPassword);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 overflow-y-auto animate-fade-in">
       <div className="relative w-full max-w-md rounded-3xl bg-white p-6 sm:p-8 shadow-2xl border border-slate-200 text-slate-900 my-6">
@@ -175,7 +203,58 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </button>
           </div>
 
-          {localMode === 'login' ? (
+          {isPasswordRecovery ? (
+            <form onSubmit={handleUpdatePassword} className="space-y-3">
+              <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 mb-3">
+                <p className="text-sm font-black text-[#071B2F]">
+                  Redefinir senha
+                </p>
+                <p className="text-xs text-slate-500 mt-1">
+                  Crie uma nova senha para acessar sua conta no EURESOLVO.
+                </p>
+              </div>
+
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Nova senha"
+                value={newPassword}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setFormError('');
+                }}
+                className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+              />
+
+              <input
+                type="password"
+                required
+                minLength={6}
+                placeholder="Confirmar nova senha"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setFormError('');
+                }}
+                className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
+              />
+
+              {formError && (
+                <p className="text-xs font-bold text-red-600">
+                  {formError}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isCreating}
+                className="w-full py-2.5 rounded-xl bg-[#45C900] hover:bg-[#59E600] disabled:opacity-60 text-[#071B2F] text-xs font-black transition"
+              >
+                {isCreating ? 'SALVANDO...' : 'SALVAR NOVA SENHA'}
+              </button>
+            </form>
+          ) : localMode === 'login' ? (
             <form onSubmit={handleLogin} className="space-y-2.5">
               <input
                 type="email"

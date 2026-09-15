@@ -114,6 +114,7 @@ export function useAppState() {
     AppStorage.getCurrentUserId
   );
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
   const [favorites, setFavorites] = useState<string[]>(AppStorage.getFavorites);
 
   const [activeView, setActiveView] = useState<ActiveView>('home');
@@ -543,6 +544,22 @@ export function useAppState() {
 
     return () => {
       cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsPasswordRecovery(true);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
     };
   }, []);
 
@@ -1498,6 +1515,32 @@ export function useAppState() {
     [showToast]
   );
 
+  const updatePassword = useCallback(
+    async (newPassword: string): Promise<boolean> => {
+      if (!supabase) return false;
+
+      if (newPassword.length < 6) {
+        showToast('A nova senha precisa ter pelo menos 6 caracteres.', 'warning');
+        return false;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        console.error('Erro ao atualizar senha:', error);
+        showToast('Não foi possível atualizar sua senha.', 'error');
+        return false;
+      }
+
+      setIsPasswordRecovery(false);
+      showToast('Senha atualizada com sucesso!', 'success');
+      return true;
+    },
+    [showToast]
+  );
+
   const logoutUser = useCallback(async (): Promise<boolean> => {
     if (!supabase) {
       showToast('Supabase não está configurado.', 'warning');
@@ -1641,6 +1684,7 @@ export function useAppState() {
     filters,
     unreadNotificationsCount,
     isAuthenticated,
+    isPasswordRecovery,
     setActiveView,
     setSelectedProId,
     setSelectedProfessionalId: setSelectedProId,
@@ -1657,6 +1701,7 @@ export function useAppState() {
     registerUser,
     loginUser,
     sendPasswordReset,
+    updatePassword,
     logoutUser,
     updateAvatar,
     applyToRequest,
