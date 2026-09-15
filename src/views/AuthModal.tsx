@@ -13,6 +13,7 @@ interface AuthModalProps {
   onSelectUser: (userId: string) => void;
   onCreateUser: (newUser: UserProfile, password: string) => Promise<boolean>;
   onLoginUser: (email: string, password: string) => Promise<boolean>;
+  onPasswordReset: (email: string) => Promise<boolean>;
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -24,6 +25,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onSelectUser,
   onCreateUser,
   onLoginUser,
+  onPasswordReset,
 }) => {
   const [selectedRole, setSelectedRole] = useState<UserRole>('professional');
   const [contractorType, setContractorType] = useState<ContractorType>('individual');
@@ -193,6 +195,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full text-xs rounded-xl border border-slate-200 p-2.5 text-slate-800 focus:border-[#45C900] focus:outline-none"
               />
+
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => onPasswordReset(email)}
+                  className="text-[11px] font-bold text-[#003A67] hover:underline"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
 
               <button
                 type="submit"

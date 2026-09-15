@@ -50,6 +50,7 @@ export default function App() {
     switchUser,
     registerUser,
     loginUser,
+    sendPasswordReset,
     logoutUser,
     updateAvatar,
     isAuthenticated,
@@ -399,6 +400,7 @@ export default function App() {
         onSelectUser={switchUser}
         onCreateUser={registerUser}
         onLoginUser={loginUser}
+        onPasswordReset={sendPasswordReset}
       />
 
       {/* Terms, LGPD & Privacy Modal */}

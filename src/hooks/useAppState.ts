@@ -1458,6 +1458,46 @@ export function useAppState() {
     [showToast]
   );
 
+  const sendPasswordReset = useCallback(
+    async (email: string): Promise<boolean> => {
+      if (!supabase) {
+        showToast('Supabase não está configurado.', 'error');
+        return false;
+      }
+
+      const normalizedEmail = email.trim();
+
+      if (!normalizedEmail) {
+        showToast('Informe seu e-mail.', 'warning');
+        return false;
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        normalizedEmail,
+        {
+          redirectTo: `${window.location.origin}/`,
+        }
+      );
+
+      if (error) {
+        console.error('Erro ao solicitar recuperação de senha:', error);
+        showToast(
+          'Não foi possível enviar o e-mail de recuperação.',
+          'error'
+        );
+        return false;
+      }
+
+      showToast(
+        'Se o e-mail estiver cadastrado, enviaremos um link para redefinir sua senha.',
+        'success'
+      );
+
+      return true;
+    },
+    [showToast]
+  );
+
   const logoutUser = useCallback(async (): Promise<boolean> => {
     if (!supabase) {
       showToast('Supabase não está configurado.', 'warning');
@@ -1616,6 +1656,7 @@ export function useAppState() {
     switchUser,
     registerUser,
     loginUser,
+    sendPasswordReset,
     logoutUser,
     updateAvatar,
     applyToRequest,
